@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# this script is used to exec vifm via a keyboard shortcut
+st -e sh ~/bin/vifmrun

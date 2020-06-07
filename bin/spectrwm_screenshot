@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# this script uses imagemagick's 'import' utility to save a screenshot, called by a keyboard shortcut
+
+import -window root "$HOME/screenshots/scrot-`date +%y-%m%d-%H:%M:%S`.png"
