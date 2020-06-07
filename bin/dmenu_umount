@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# A dmenu prompt to unmount drives.
+# Provides you with mounted partitions, select one to unmount.
+# Drives mounted at /, /boot, /home and /mnt will not be options to unmount.
+#
+# This is basically a script from taken Luke Smith - https://lukesmith.xyz - so all credit goes to him.
+# I modified the script slightly to not try to umount /mnt and to use dmenu to notify me about the process,
+# instead of using notify-send or whatever Luke used. For this, I used the dmenu_notify function and I also 
+# customized the dmenu calls with variables OPTS and FONT to suit my needs. 
+#
+# This script uses "doas" instead of "sudo", so if you don't have "doas" installed, replace it back with "sudo -A". 
+#
+# TODO: I may add some error checking functionality later, because right now, if the umounting fails, 
+# you won't get any feedback, you'll get the standard notification "USB/Android umounting: $chosen umounted", 
+# so be mindful of that.
+
+OPTS=' -b -nf #7c828a -sb #5c8dd9 -sf #000000 -nb #30343f -i'
+FONT="Source Code Pro Bold-13"
+
+dmenu_notify() {
+         : | dmenu -fn "$FONT" $OPTS  -p "$1 (press enter)"
+}
+
+
+unmountusb() {
+	[ -z "$drives" ] && exit
+	chosen="$(echo "$drives" | dmenu -fn "$FONT" $OPTS -p "Unmount which drive?")" || exit 1
+	chosen="$(echo "$chosen" | awk '{print $1}')"
+	[ -z "$chosen" ] && exit
+	doas umount "$chosen" && dmenu_notify "💻 USB unmounting: $chosen unmounted."
+	}
+
+unmountandroid() { \
+	chosen="$(awk '/simple-mtpfs/ {print $2}' /etc/mtab | dmenu -fn "$FONT" $OPTS -p "Unmount which device?")" || exit 1
+	[ -z "$chosen" ] && exit
+	doas umount -l "$chosen" && dmenu_notify "🤖 Android unmounting: $chosen unmounted."
+	}
+
+asktype() { \
+	choice="$(printf "USB\\nAndroid" | dmenu -fn "$FONT" $OPTS -p "Unmount a USB drive or Android device?")" || exit 1
+	case "$choice" in
+		USB) unmountusb ;;
+		Android) unmountandroid ;;
+	esac
+	}
+
+drives=$(lsblk -nrpo "name,type,size,mountpoint" | awk '$4!~/\/boot|\/mnt|\/home$|SWAP/&&length($4)>1{printf "%s (%s)\n",$4,$3}')
+
+if ! grep simple-mtpfs /etc/mtab; then
+	[ -z "$drives" ] && echo "No drives to unmount." &&  exit
+	echo "Unmountable USB drive detected."
+	unmountusb
+else
+	if [ -z "$drives" ]
+	then
+		echo "Unmountable Android device detected."
+	       	unmountandroid
+	else
+		echo "Unmountable USB drive(s) and Android device(s) detected."
+		asktype
+	fi
+fi
+
