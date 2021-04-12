@@ -1,0 +1,7 @@
+! FONTS
+! -----------------------------------------------------------------------------
+  Xft.antialias:  true
+  Xft.hinting:    false
+  Xft.hintstyle:  0
+  Xft.dpi:        75
+  Xft.rgba:       none:
