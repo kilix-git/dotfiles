@@ -1,0 +1,11 @@
+#!/bin/sh
+
+OPTS=' -b -nf #7c828a -sb #5c8dd9 -sf #000000 -nb #30343f -i'
+FONT="Source Code Pro Bold-13"
+
+dmenu_notify() {
+         : | dmenu -fn "$FONT" $OPTS  -p "$1 (press enter)"
+	sleep 60; doas poweroff 
+}
+
+dmenu_notify "System will shutdown in one minute"
